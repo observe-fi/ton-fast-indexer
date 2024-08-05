@@ -37,12 +37,27 @@ but you are not obligated to do so. If you do not wish to do so, delete this
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
-  auto opts = ton::validator::ValidatorManagerOptions::create(
-      ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()},
-      ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()});
-//  auto mode = td::DbOpenMode::db_readonly;
-  auto db_root_ = "/ton-db";
-  auto db_ = td::actor::create_actor<ton::validator::RootDb>("db", td::actor::ActorId<ton::validator::ValidatorManager>(), db_root_, std::move(opts));
+  td::uint32 threads = 7;
+  td::actor::Scheduler scheduler({threads});
+  td::actor::ActorOwn<ton::validator::RootDb> rtDB;
+  scheduler.run_in_context([&] {
+    auto opts = ton::validator::ValidatorManagerOptions::create(
+        ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()},
+        ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()});
+    //  auto mode = td::DbOpenMode::db_readonly;
+    //  ton::validator::
+    auto db_root_ = "/storage-1";
+    LOG(INFO) << "Done!";
+    rtDB = td::actor::create_actor<ton::validator::RootDb>(
+        "db", td::actor::ActorId<ton::validator::ValidatorManager>(), db_root_, std::move(opts));
+    LOG(INFO) << "Done!";
 
+  });
+  scheduler.run_in_context([&] {
+
+  });
+
+  while(scheduler.run(1)) {}
+  LOG(INFO) << "Done!";
   return 0;
 }
